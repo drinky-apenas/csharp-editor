@@ -1,0 +1,33 @@
+{
+  "name": "C# Code Editor with Autocomplete",
+  "short_name": "C# Editor",
+  "description": "Editor C# offline com autocompletar inteligente",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1e1e1e",
+  "theme_color": "#512BD4",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231e1e1e' width='192' height='192' rx='45'/><text x='96' y='140' font-size='120' font-weight='bold' fill='%23512BD4' text-anchor='middle' font-family='Arial'>C#</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23512BD4' width='192' height='192' rx='45'/><text x='96' y='140' font-size='120' font-weight='bold' fill='%23fff' text-anchor='middle' font-family='Arial'>C#</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "developer"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%231e1e1e' width='540' height='720'/><text x='270' y='360' font-size='80' fill='%23512BD4' text-anchor='middle'>C# Editor</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    }
+  ]
+}
