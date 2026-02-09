@@ -3,7 +3,7 @@
 // ============================================
 
 // 🔐 SUBSTITUA AQUI PELA SUA GROQ API KEY
-const GROQ_API_KEY = ''; // Pega em https://console.groq.com
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ''; // Pega em https://console.groq.com
 
 // VS Code Dark+ Color Theme
 const VS_CODE_THEME = {
