@@ -1,9 +1,21 @@
 // ============================================
 // CONFIGURAÇÃO
 // ============================================
+// Busca a chave do servidor (Vercel injeta via environment variable)
+let GROQ_API_KEY = '';
 
-// 🔐 SUBSTITUA AQUI PELA SUA GROQ API KEY
-const GROQ_API_KEY = ''; // Coloca sua chave aqui temporariamente
+fetch('/api/config')
+  .then(res => res.json())
+  .then(config => {
+    if (config.GROQ_API_KEY) {
+      GROQ_API_KEY = config.GROQ_API_KEY;
+      console.log('✅ API Key carregada com sucesso');
+    }
+  })
+  .catch(err => {
+    console.warn('⚠️ Não foi possível carregar a chave:', err);
+    GROQ_API_KEY = '';
+  });
 
 // VS Code Dark+ Color Theme
 const VS_CODE_THEME = {
