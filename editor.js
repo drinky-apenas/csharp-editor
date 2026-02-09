@@ -1,16 +1,23 @@
+// ============================================
+// CONFIGURAÇÃO
+// ============================================
+
+// 🔐 SUBSTITUA AQUI PELA SUA GROQ API KEY
+const GROQ_API_KEY = ''; // Pega em https://console.groq.com
+
 // VS Code Dark+ Color Theme
 const VS_CODE_THEME = {
-  'keyword': '#569CD6',           // blue
-  'type': '#4EC9B0',              // teal (class, interface)
-  'class': '#4EC9B0',             // teal
-  'interface': '#4EC9B0',         // teal
-  'function': '#DCDCAA',          // yellow
-  'variable': '#9CDCFE',          // light blue
-  'string': '#CE9178',            // brown/orange
-  'number': '#B5CEA8',            // green
-  'comment': '#6A9955',           // green
-  'property': '#9CDCFE',          // light blue
-  'namespace': '#4EC9B0',         // teal
+  'keyword': '#569CD6',
+  'type': '#4EC9B0',
+  'class': '#4EC9B0',
+  'interface': '#4EC9B0',
+  'function': '#DCDCAA',
+  'variable': '#9CDCFE',
+  'string': '#CE9178',
+  'number': '#B5CEA8',
+  'comment': '#6A9955',
+  'property': '#9CDCFE',
+  'namespace': '#4EC9B0',
 };
 
 // C# Keywords
@@ -29,26 +36,13 @@ const CSHARP_KEYWORDS = [
 
 // System namespaces e tipos
 const SYSTEM_TYPES = [
-  // System
   'System', 'Object', 'String', 'Int32', 'Int64', 'Double', 'Float', 'Boolean', 'DateTime',
   'TimeSpan', 'Guid', 'Exception', 'EventArgs', 'Delegate', 'Action', 'Func', 'Task',
-  
-  // System.Collections
   'ArrayList', 'Hashtable', 'Queue', 'Stack', 'List', 'Dictionary', 'HashSet', 'LinkedList',
-  
-  // System.Linq
   'Enumerable', 'Queryable', 'IEnumerable', 'IQueryable', 'IGrouping',
-  
-  // System.Text
   'StringBuilder', 'Encoding', 'Regex',
-  
-  // System.IO
   'File', 'Directory', 'StreamReader', 'StreamWriter', 'FileStream',
-  
-  // System.Net
   'HttpClient', 'WebClient', 'Uri', 'IPAddress',
-  
-  // System.Threading
   'Thread', 'ThreadPool', 'Mutex', 'Semaphore', 'Lock',
 ];
 
@@ -62,11 +56,19 @@ const SYSTEM_METHODS = [
   'Dictionary.Add', 'Dictionary.Remove', 'Dictionary.Keys', 'Dictionary.Values',
 ];
 
-// Inicializa Monaco Editor
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+// ============================================
+// GLOBAL VARIABLES
+// ============================================
 
 let editor;
 let userDefinedSymbols = new Set();
+let decorations = [];
+
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
 
 require(['vs/editor/editor.main'], function() {
     // Define VS Code Dark+ Theme
@@ -103,6 +105,8 @@ require(['vs/editor/editor.main'], function() {
             'editorCursor.foreground': '#aeafad',
             'editorWhitespace.foreground': '#3e3e42',
             'editor.foldBackground': '#424242',
+            'editorError.foreground': '#f48771',
+            'editorWarning.foreground': '#dcdcaa',
         }
     });
 
@@ -114,7 +118,7 @@ class Program
 {
     static void Main()
     {
-        Console.WriteLine("Bem-vindo ao C# Editor!");
+        Console.WriteLine("Bem-vindo ao C# Editor com IA!");
         // Digite seu código aqui...
     }
 }`,
@@ -129,7 +133,7 @@ class Program
         scrollBeyondLastLine: false,
         wordWrap: 'on',
         lineNumbers: 'on',
-        glyphMargin: false,
+        glyphMargin: true,
         folding: true,
         lineDecorationsWidth: 10,
         bracketPairColorization: { enabled: true },
@@ -143,17 +147,26 @@ class Program
             `Linha ${pos.lineNumber}, Coluna ${pos.column}`;
     });
 
-    // Autocomplete
+    // Autocompletar
     registerCSharpCompletions();
+
+    // Validação de sintaxe em tempo real
+    validateSyntaxOnChange();
 
     // Sintaxe highlighting customizado
     applyCSharpHighlighting();
+
+    // UI de botões
+    setupUIButtons();
 });
 
-// Registra provider de autocompletar
+// ============================================
+// AUTOCOMPLETAR IA
+// ============================================
+
 function registerCSharpCompletions() {
     monaco.languages.registerCompletionItemProvider('csharp', {
-        provideCompletionItems: (model, position) => {
+        provideCompletionItems: async (model, position) => {
             const textUntilPosition = model.getValueInRange({
                 startLineNumber: 1,
                 startColumn: 1,
@@ -242,23 +255,295 @@ function registerCSharpCompletions() {
                 }
             });
 
+            // 🤖 COMPLETAÇÃO COM IA
+            if (word.length >= 3) {
+                try {
+                    const aiSuggestion = await getAICompletion(textUntilPosition);
+                    if (aiSuggestion && aiSuggestion.trim()) {
+                        suggestions.unshift({
+                            label: '✨ IA Suggestion',
+                            kind: monaco.languages.CompletionItemKind.Text,
+                            insertText: aiSuggestion,
+                            detail: 'AI Powered',
+                            preselect: true,
+                            range: new monaco.Range(
+                                position.lineNumber, 
+                                position.column - word.length, 
+                                position.lineNumber, 
+                                position.column
+                            ),
+                            sortText: `0_ai`,
+                        });
+                    }
+                } catch (err) {
+                    console.warn('IA não disponível:', err);
+                }
+            }
+
             return { suggestions };
         },
         triggerCharacters: ['.', ' ']
     });
 }
 
-// Extrai palavra atual
+// ============================================
+// IA - GROQ COMPLETER
+// ============================================
+
+async function getAICompletion(code) {
+    try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'mixtral-8x7b-32768',
+                messages: [{
+                    role: 'user',
+                    content: `Complete this C# code snippet. Only return the completion, no explanations:\n${code}`
+                }],
+                max_tokens: 80,
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Groq API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const completion = data.choices[0].message.content;
+        
+        // Limpa a resposta (remove quebras de linha desnecessárias)
+        return completion.trim().split('\n')[0];
+    } catch (err) {
+        console.error('Erro na completação IA:', err);
+        return null;
+    }
+}
+
+// ============================================
+// VALIDAÇÃO DE SINTAXE
+// ============================================
+
+function validateSyntaxOnChange() {
+    editor.onDidChangeModelContent(async () => {
+        const code = editor.getValue();
+        
+        // Limpa decorações antigas
+        decorations = editor.deltaDecorations(decorations, []);
+        
+        // Valida sintaxe
+        validateCSharpSyntax(code);
+        
+        // Atualiza símbolos
+        applyCSharpHighlighting();
+    });
+}
+
+function validateCSharpSyntax(code) {
+    const errors = [];
+    const lines = code.split('\n');
+
+    // Validações básicas
+    let braceCount = 0;
+    let parenCount = 0;
+    let bracketCount = 0;
+
+    lines.forEach((line, lineNum) => {
+        // Conta chaves/parênteses
+        for (let char of line) {
+            if (char === '{') braceCount++;
+            if (char === '}') braceCount--;
+            if (char === '(') parenCount++;
+            if (char === ')') parenCount--;
+            if (char === '[') bracketCount++;
+            if (char === ']') bracketCount--;
+        }
+
+        // Detecta erros comuns
+        if (line.trim().match(/Console\.WriteLine\(\s*\)/)) {
+            errors.push({
+                line: lineNum + 1,
+                message: 'WriteLine sem argumentos',
+                severity: 'warning'
+            });
+        }
+
+        if (line.trim().match(/new\s+\w+\s*(?![\({])/)) {
+            errors.push({
+                line: lineNum + 1,
+                message: 'new sem instanciação',
+                severity: 'error'
+            });
+        }
+
+        if (line.match(/using\s+\w+\s*(?!;)/)) {
+            errors.push({
+                line: lineNum + 1,
+                message: 'using sem ponto-e-vírgula',
+                severity: 'error'
+            });
+        }
+    });
+
+    // Verifica desbalanceamento
+    if (braceCount !== 0) {
+        errors.push({
+            line: lines.length,
+            message: `Chaves desbalanceadas (${braceCount > 0 ? '+' : ''}${braceCount})`,
+            severity: 'error'
+        });
+    }
+    if (parenCount !== 0) {
+        errors.push({
+            line: lines.length,
+            message: `Parênteses desbalanceados`,
+            severity: 'error'
+        });
+    }
+
+    // Cria decorações para erros
+    const newDecorations = errors.map(err => ({
+        range: new monaco.Range(err.line, 1, err.line, 1),
+        options: {
+            isWholeLine: true,
+            className: `error-line-${err.severity}`,
+            glyphMarginClassName: `error-glyph-${err.severity}`,
+            glyphMarginHoverMessage: { value: err.message },
+            minimap: { color: err.severity === 'error' ? '#f48771' : '#dcdcaa', position: 2 },
+        }
+    }));
+
+    decorations = editor.deltaDecorations(decorations, newDecorations);
+
+    // Atualiza status
+    const errorCount = errors.filter(e => e.severity === 'error').length;
+    const warningCount = errors.filter(e => e.severity === 'warning').length;
+    const statusText = errorCount > 0 
+        ? `❌ ${errorCount} erro(s)` 
+        : warningCount > 0 
+        ? `⚠️ ${warningCount} aviso(s)` 
+        : '✅ Nenhum erro detectado';
+    
+    document.getElementById('status').textContent = statusText;
+}
+
+// ============================================
+// EXPLICAR CÓDIGO COM IA
+// ============================================
+
+async function explainSelectedCode() {
+    const selection = editor.getSelectedText();
+
+    if (!selection || selection.trim() === '') {
+        showNotification('Selecione um trecho de código para explicar', 'warning');
+        return;
+    }
+
+    const explainBtn = document.getElementById('explainBtn');
+    explainBtn.disabled = true;
+    explainBtn.innerHTML = '⏳ Analisando...';
+
+    try {
+        const explanation = await getAIExplanation(selection);
+        showExplanationModal(selection, explanation);
+    } catch (err) {
+        showNotification('Erro ao conectar com IA: ' + err.message, 'error');
+    } finally {
+        explainBtn.disabled = false;
+        explainBtn.innerHTML = '💡 Explicar';
+    }
+}
+
+async function getAIExplanation(code) {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'mixtral-8x7b-32768',
+            messages: [{
+                role: 'user',
+                content: `Explique este código C# em português de forma clara, didática e concisa. Use exemplos se necessário:\n\n${code}`
+            }],
+            max_tokens: 1000,
+            temperature: 0.7
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erro na API Groq: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+function showExplanationModal(code, explanation) {
+    const modal = document.createElement('div');
+    modal.className = 'explanation-modal-overlay';
+    modal.innerHTML = `
+        <div class="explanation-modal">
+            <div class="explanation-header">
+                <h2>📝 Análise de Código</h2>
+                <button class="close-btn" onclick="this.closest('.explanation-modal-overlay').remove()">✕</button>
+            </div>
+            
+            <div class="explanation-code">
+                <strong style="color: #4ec9b0;">📌 Código Selecionado:</strong>
+                <pre>${escapeHtml(code)}</pre>
+            </div>
+            
+            <div class="explanation-text">
+                <strong style="color: #dcdcaa;">💡 Explicação:</strong>
+                <p>${explanation.replace(/\n/g, '<br>')}</p>
+            </div>
+            
+            <div class="explanation-footer">
+                <button class="btn-close-modal" onclick="this.closest('.explanation-modal-overlay').remove()">Fechar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 4000);
+}
+
+// ============================================
+// UTILITÁRIOS
+// ============================================
+
 function extractWord(text) {
     const match = text.match(/\b[\w.]*$/);
     return match ? match[0].split('.').pop() : '';
 }
 
-// Highlighting customizado (análise básica)
 function applyCSharpHighlighting() {
     const code = editor.getValue();
     
-    // Extrai símbolos definidos pelo usuário (class, method, var, etc)
     const classRegex = /class\s+(\w+)/g;
     const methodRegex = /(?:public|private|protected|static|async)?\s+\w+\s+(\w+)\s*\(/g;
     const varRegex = /var\s+(\w+)/g;
@@ -275,27 +560,59 @@ function applyCSharpHighlighting() {
     }
 }
 
-// Download do código
-document.getElementById('downloadBtn').addEventListener('click', () => {
-    const code = editor.getValue();
-    const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(code));
-    element.setAttribute('download', 'Program.cs');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-});
+// ============================================
+// BUTTONS SETUP
+// ============================================
 
-// Limpar editor
-document.getElementById('clearBtn').addEventListener('click', () => {
-    if (confirm('Tem certeza que deseja limpar o editor?')) {
-        editor.setValue('');
-        userDefinedSymbols.clear();
-    }
-});
+function setupUIButtons() {
+    // Download
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const code = editor.getValue();
+        const element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(code));
+        element.setAttribute('download', 'Program.cs');
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+        showNotification('✅ Código baixado!', 'success');
+    });
 
-// Monitorar mudanças para atualizar símbolos
-editor.onDidChangeModelContent(() => {
-    applyCSharpHighlighting();
-});
+    // Limpar
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('Tem certeza que deseja limpar o editor?')) {
+            editor.setValue('');
+            userDefinedSymbols.clear();
+            document.getElementById('status').textContent = '✅ Nenhum erro detectado';
+            showNotification('✨ Editor limpo!', 'success');
+        }
+    });
+
+    // Explicar com IA
+    document.getElementById('explainBtn').addEventListener('click', explainSelectedCode);
+
+    // PWA Install
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'block';
+    });
+
+    installBtn?.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Usuário respondeu: ${outcome}`);
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        console.log('✅ PWA instalada!');
+        installBtn.style.display = 'none';
+    });
+}

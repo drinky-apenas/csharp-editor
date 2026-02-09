@@ -57,7 +57,8 @@ html, body {
 
 .btn-install,
 .btn-download,
-.btn-clear {
+.btn-clear,
+#explainBtn {
     background: #0e639c;
     border: 1px solid #007acc;
     color: #fff;
@@ -71,14 +72,16 @@ html, body {
 
 .btn-install:hover,
 .btn-download:hover,
-.btn-clear:hover {
+.btn-clear:hover,
+#explainBtn:hover {
     background: #1177bb;
     border-color: #00a4ef;
 }
 
 .btn-install:active,
 .btn-download:active,
-.btn-clear:active {
+.btn-clear:active,
+#explainBtn:active {
     transform: scale(0.98);
 }
 
@@ -90,6 +93,21 @@ html, body {
 .btn-clear:hover {
     background: #7d3c3c;
     border-color: #a74c4c;
+}
+
+#explainBtn {
+    background: #10b981;
+    border-color: #059669;
+}
+
+#explainBtn:hover {
+    background: #16a34a;
+    border-color: #15803d;
+}
+
+#explainBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Editor Container */
@@ -106,45 +124,214 @@ html, body {
     font-feature-settings: "calt" 1;
 }
 
-/* Completions Popup */
-.completions-popup {
-    position: absolute;
-    background: #252526;
-    border: 1px solid #3e3e42;
-    border-radius: 4px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-    min-width: 250px;
+/* Erros e Avisos */
+.error-line-error {
+    background: rgba(244, 135, 113, 0.1);
+    border-left: 3px solid #f48771;
 }
 
-.completion-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: background 0.15s;
+.error-line-warning {
+    background: rgba(220, 220, 170, 0.05);
+    border-left: 3px solid #dcdcaa;
 }
 
-.completion-item:hover {
-    background: #2d2d30;
-}
-
-.completion-item.selected {
-    background: #094771;
-    border-left-color: #007acc;
-}
-
-.completion-label {
-    color: #9cdcfe;
-    font-weight: 500;
-    font-size: 13px;
-}
-
-.completion-detail {
-    color: #858585;
+.error-glyph-error::before {
+    content: "❌";
     font-size: 12px;
-    margin-top: 2px;
+}
+
+.error-glyph-warning::before {
+    content: "⚠️";
+    font-size: 12px;
+}
+
+/* Modal de Explicação */
+.explanation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.explanation-modal {
+    background: #252526;
+    color: #d4d4d4;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.explanation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #3e3e42;
+}
+
+.explanation-header h2 {
+    color: #4ec9b0;
+    font-size: 16px;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #858585;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #3e3e42;
+    color: #d4d4d4;
+}
+
+.explanation-code {
+    padding: 15px 20px;
+    background: #1e1e1e;
+    border-bottom: 1px solid #3e3e42;
+    overflow-x: auto;
+}
+
+.explanation-code pre {
+    margin: 8px 0 0 0;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #ce9178;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #252526;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 3px solid #007acc;
+}
+
+.explanation-text {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.explanation-text p {
+    margin: 0;
+    color: #d4d4d4;
+}
+
+.explanation-text strong {
+    color: #dcdcaa;
+}
+
+.explanation-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #3e3e42;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-close-modal {
+    background: #0e639c;
+    border: 1px solid #007acc;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: #1177bb;
+}
+
+/* Notificações */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    z-index: 9999;
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification-info {
+    background: #007acc;
+    border: 1px solid #0098ff;
+    color: white;
+}
+
+.notification-success {
+    background: #10b981;
+    border: 1px solid #34d399;
+    color: white;
+}
+
+.notification-warning {
+    background: #d97706;
+    border: 1px solid #f59e0b;
+    color: white;
+}
+
+.notification-error {
+    background: #dc2626;
+    border: 1px solid #ef4444;
+    color: white;
 }
 
 /* Footer */
@@ -193,12 +380,15 @@ html, body {
     .header-actions {
         width: 100%;
         gap: 6px;
+        flex-wrap: wrap;
     }
 
     .btn-install,
     .btn-download,
-    .btn-clear {
+    .btn-clear,
+    #explainBtn {
         flex: 1;
+        min-width: 80px;
         padding: 8px 10px;
         font-size: 12px;
     }
@@ -214,9 +404,18 @@ html, body {
         height: auto;
         padding: 8px 12px;
     }
+
+    .explanation-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .explanation-code pre {
+        font-size: 11px;
+    }
 }
 
-/* Dark mode is default, so light mode support minimal */
+/* Dark mode is default */
 @media (prefers-color-scheme: light) {
     html, body, .container, .header, .footer {
         background: #1e1e1e;

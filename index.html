@@ -21,10 +21,13 @@
     <div class="container">
         <header class="header">
             <div class="header-content">
-                <h1>C# Code Editor</h1>
+                <h1>C# Code Editor with AI</h1>
                 <div class="header-actions">
                     <button id="installBtn" class="btn-install" style="display: none;">
                         📥 Instalar como App
+                    </button>
+                    <button id="explainBtn" class="btn-install" style="background: #10b981; border-color: #059669;" title="Selecione um código e clique para explicar com IA">
+                        💡 Explicar
                     </button>
                     <button id="downloadBtn" class="btn-download" title="Baixar código">
                         ⬇️ Baixar
@@ -38,11 +41,10 @@
 
         <div class="editor-container">
             <div id="editor" class="editor"></div>
-            <div id="completions" class="completions-popup" style="display: none;"></div>
         </div>
 
         <footer class="footer">
-            <span id="status">Pronto • Offline Mode Ativo</span>
+            <span id="status">✅ Nenhum erro detectado</span>
             <span id="position">Linha 1, Coluna 1</span>
         </footer>
     </div>
@@ -54,31 +56,6 @@
                 .then(reg => console.log('✅ SW registrado'))
                 .catch(err => console.log('❌ SW erro:', err));
         }
-
-        // PWA Install Prompt
-        let deferredPrompt;
-        const installBtn = document.getElementById('installBtn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBtn.style.display = 'block';
-        });
-
-        installBtn?.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`Usuário respondeu: ${outcome}`);
-                deferredPrompt = null;
-                installBtn.style.display = 'none';
-            }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            console.log('✅ PWA instalada!');
-            installBtn.style.display = 'none';
-        });
     </script>
 
     <!-- Editor Initialization -->
