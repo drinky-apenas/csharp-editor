@@ -2,5 +2,5 @@
   "buildCommand": "",
   "outputDirectory": "./",
   "installCommand": "",
-  "framework": "static"
+  "framework": null
 }
