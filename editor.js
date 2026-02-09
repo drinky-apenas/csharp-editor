@@ -3,7 +3,7 @@
 // ============================================
 
 // 🔐 SUBSTITUA AQUI PELA SUA GROQ API KEY
-const GROQ_API_KEY = ''; // A chave será injetada pelo Vercel via injection 
+const GROQ_API_KEY = ''; // Coloca sua chave aqui temporariamente
 
 // VS Code Dark+ Color Theme
 const VS_CODE_THEME = {
